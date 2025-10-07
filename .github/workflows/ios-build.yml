@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,10 +34,15 @@ jobs:
         run: |
           npx cap sync ios
 
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods --no-document
+          cd ios/App && pod install
+
       - name: Build Xcode (unsigned)
         working-directory: ios/App
         run: |
-          xcodebuild -scheme App -configuration Release -sdk iphoneos -derivedDataPath build clean build
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos -derivedDataPath build clean build
 
       - name: Package IPA (unsigned)
         working-directory: ios/App
