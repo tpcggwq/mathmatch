@@ -1,0 +1,7 @@
+{
+  "appId": "com.toprak.mathmatch",
+  "appName": "MathMatch",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
+

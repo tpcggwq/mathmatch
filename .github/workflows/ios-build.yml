@@ -1,0 +1,57 @@
+name: iOS unsigned IPA (Capacitor)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-13
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Ensure web assets
+        run: |
+          if [ ! -d "www" ]; then mkdir -p www; fi
+          cp -f index.html www/index.html
+          cp -f lk-shim.js www/lk-shim.js
+          cp -f game.js www/game.js
+
+      - name: Install Capacitor iOS
+        run: |
+          npm install @capacitor/cli @capacitor/core @capacitor/ios --save
+
+      - name: Sync iOS
+        run: |
+          npx cap sync ios
+
+      - name: Build Xcode (unsigned)
+        working-directory: ios/App
+        run: |
+          xcodebuild -scheme App -configuration Release -sdk iphoneos -derivedDataPath build clean build
+
+      - name: Package IPA (unsigned)
+        working-directory: ios/App
+        run: |
+          mkdir -p payload
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
+          cp -R "$APP_PATH" payload/App.app
+          pushd payload
+          /usr/bin/zip -r ../MathMatch-unsigned.ipa .
+          popd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MathMatch-unsigned-ipa
+          path: ios/App/MathMatch-unsigned.ipa
+
